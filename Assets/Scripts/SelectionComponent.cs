@@ -4,10 +4,10 @@ using UnityEngine;
 
 public class SelectionComponent : MonoBehaviour {
     private void Start() {
-        GetComponent<Renderer>().material.color = Color.white;
+        GetComponent<Renderer>().material.SetColor("_UnitColor", Color.blue);
     }
     private void OnDestroy() {
-        GetComponent<Renderer>().material.color = Color.red;
+        GetComponent<Renderer>().material.SetColor("_UnitColor", Color.red);
     }
 }
 
