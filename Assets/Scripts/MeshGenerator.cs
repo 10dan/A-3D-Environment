@@ -5,12 +5,11 @@ using UnityEngine;
 [ExecuteInEditMode]
 [RequireComponent(typeof(MeshFilter))]
 public class MeshGenerator : MonoBehaviour {
-    Mesh mesh;
+    public Mesh mesh;
     MeshCollider meshCollider;
+    int xSize = 100;
+    int zSize = 100;
 
-    [SerializeField] int xSize = 20;
-    [SerializeField] int zSize = 20;
-    [SerializeField] float scale = 0.1f;
     [SerializeField] [Range(0, 0.3f)] float perlinScale = 0.3f;
     [SerializeField] [Range(0, 0.3f)] float perlinScale2 = 1f;
     [SerializeField] [Range(0, 0.3f)] float perlinScale3 = 1f;
@@ -28,16 +27,30 @@ public class MeshGenerator : MonoBehaviour {
     float minTerrainHeight, maxTerrainHeight;
 
     private void Start() {
-
-    }
-
-    private void Update() {
         mesh = new Mesh();
         GetComponent<MeshFilter>().mesh = mesh;
         meshCollider = GetComponent<MeshCollider>();
         CreateShape();
         UpdateMesh();
         meshCollider.sharedMesh = mesh;
+    }
+
+    private void Update() {
+        if (Input.GetMouseButtonDown(0)) {
+            AddLand();
+        }
+    }
+
+    private void AddLand() {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hitPoint;
+        if (meshCollider.Raycast(ray, out hitPoint, 400f)) {
+            Vector3 pos = ray.GetPoint(hitPoint.distance);
+            int x = Mathf.RoundToInt(pos.x);
+            int z = Mathf.RoundToInt(pos.z);
+            verts[x + z *     (zSize + 1)] += Vector3.up * 2;
+            CalcTriangles();
+        }
     }
 
     void CreateShape() {
@@ -48,7 +61,7 @@ public class MeshGenerator : MonoBehaviour {
                 float level2 = Mathf.PerlinNoise(x * perlinScale2, z * perlinScale2) * secondLevelAmp;
                 float level3 = Mathf.PerlinNoise(x * perlinScale3, z * perlinScale3) * thirdLevelAmp;
                 float y = level1 + level2 + level3;
-                verts[i] = new Vector3(x * scale, y * scale, z * scale);
+                verts[i] = new Vector3(x, y, z);
                 if (y > maxTerrainHeight) {
                     maxTerrainHeight = y;
                 }
@@ -59,6 +72,10 @@ public class MeshGenerator : MonoBehaviour {
             }
         }
 
+        CalcTriangles();
+    }
+
+    private void CalcTriangles() {
         triangles = new int[xSize * zSize * 6];
         int vert = 0;
         int tris = 0;
@@ -85,6 +102,7 @@ public class MeshGenerator : MonoBehaviour {
                 i++;
             }
         }
+        UpdateMesh();
     }
 
     void UpdateMesh() {
